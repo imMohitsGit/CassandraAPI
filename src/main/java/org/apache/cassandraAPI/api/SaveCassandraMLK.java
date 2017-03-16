@@ -27,7 +27,8 @@ import java.util.Vector;
 public class SaveCassandraMLK {
     /* Cassandra Query Definition*/
     private static final String INSERT_QUERY = "INSERT INTO test.matrix4 (row_id, column_id, unique_id, value) VALUES (?,?,?,?);";
-    private static final String SELECT_QUERY = "SELECT row_id, column_id, value FROM test.matrix4;";
+    private static final String SELECT_QUERY = "SELECT row_id, column_id, unique_id, value FROM test.matrix4 where row_id <=140000 allow filtering;";
+    private  static  final String GET_STATE = "";
 
     /*
      *	table script: "CREATE TABLE matrix4 (
@@ -68,7 +69,7 @@ public class SaveCassandraMLK {
         setQuery(collection1,streamExecutionEnvironment);
         streamExecutionEnvironment.execute("Write");
         /*Uncomment for retrieving from the table*/
-        //getQuery(env);
+        getQuery2(env).print();
     }
     public static DataStream<Tuple4<Integer, Integer, Double,Double>> setQuery(ArrayList<Tuple4<Integer, Integer, Double,Double>> collection, StreamExecutionEnvironment env) throws Exception {
         DataStream<Tuple4<Integer, Integer, Double,Double>> stream = env.fromCollection(collection);
@@ -76,7 +77,7 @@ public class SaveCassandraMLK {
                 .setClusterBuilder(new ClusterBuilder() {
                     @Override
                     public Cluster buildCluster(Cluster.Builder builder) {
-                        return builder.addContactPoint("127.0.0.1").build();
+                        return builder.addContactPoint("127.0.0.1").build(); //Change ibm-power-1 on cluster otherwise 127.0.0.1
                     }
                 })
                 .build();
@@ -118,19 +119,31 @@ public class SaveCassandraMLK {
         return collection;
     }
 /*It is used to retrieve whole row from the matrix but it is not used to retrieve the state of  Machine Learning Algorithm*/
-    public static DataSet<Tuple3<Integer, Integer, String>> getQuery(ExecutionEnvironment env) throws Exception {
+    public static DataSet<Tuple3<Integer, Integer, String>> getQuery2(ExecutionEnvironment env) throws Exception {
         DataSet<Tuple3<Integer, Integer, String>> inputDS = env
                 .createInput(new CassandraInputFormat<Tuple3<Integer, Integer, String>>(SELECT_QUERY, new ClusterBuilder() {
                     @Override
                     protected Cluster buildCluster(Cluster.Builder builder) {
-                        return builder.addContactPoints("127.0.0.1").build();
+                        return builder.addContactPoints("ibm-power-1").build(); //Change ibm-power-1 on cluster
                     }
                 }), TupleTypeInfo.of(new TypeHint<Tuple3<Integer, Integer, String>>() {
                 }));
         return inputDS;
     }
     /*It is used to retrieve whole row from the matrix and it is used to retrieve the state of  Machine Learning Algorithm */
-    public static DataSet<Tuple4<Integer, Integer, Double, Double>> getQuery2(ExecutionEnvironment env) throws Exception {
+    public static DataSet<Tuple4<Integer, Integer, Double, Double>> getQuery(ExecutionEnvironment env) throws Exception {
+        DataSet<Tuple4<Integer, Integer, Double, Double>> inputDS = env
+                .createInput(new CassandraInputFormat<Tuple4<Integer, Integer, Double, Double>>(SELECT_QUERY, new ClusterBuilder() {
+                    @Override
+                    protected Cluster buildCluster(Cluster.Builder builder) {
+                        return builder.addContactPoints("127.0.0.1").build();
+                    }
+                }), TupleTypeInfo.of(new TypeHint<Tuple4<Integer, Integer, Double, Double>>() {
+                }));
+        return inputDS;
+    }
+    /*It is used to retrieve whole row from the matrix and it is used to retrieve the state of  Machine Learning Algorithm */
+    public static DataSet<Tuple4<Integer, Integer, Double, Double>> getQuery3(ExecutionEnvironment env) throws Exception {
         DataSet<Tuple4<Integer, Integer, Double, Double>> inputDS = env
                 .createInput(new CassandraInputFormat<Tuple4<Integer, Integer, Double, Double>>(SELECT_QUERY, new ClusterBuilder() {
                     @Override

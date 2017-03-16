@@ -58,21 +58,38 @@ public class SaveCassandra {
         String line;
         /* Creating ArrayList of Vector, which will store all the elements from the file*/
         ArrayList<Vector<String>> states5 = new ArrayList<Vector<String>>();
-        while ((line = br.readLine()) != null) {
-            /**
-             * Reading file's each elements which are separated with comma (,), and
-             * Storing the elements in the Java Tuples
-             * */
-            String[] entries = line.split(",");
-            Vector<String> state5 = new Vector<String>(Arrays.asList(entries));
-            states5.add(state5);
+//Uncomment if want to read from csv
+//        while ((line = br.readLine()) != null) {
+//            /**
+//             * Reading file's each elements which are separated with comma (,), and
+//             * Storing the elements in the Java Tuples
+//             * */
+//            //String[] entries = line.split(",");
+//           // Vector<String> state5 = new Vector<String>(Arrays.asList(line.split(",")));
+//            states5.add(new Vector<String>(Arrays.asList(line.split(","))));
+//        }
+        //Random vector generator
+        int numcol = 10;
+        for(int k = 0; k < 10000; k++){
+            Vector<String> vector = new Vector<String>(numcol);
+            for (int v =0 ; v<=numcol-1; v++)
+            {
+                vector.add(v, "0");
+            }
+            states5.add(vector);
         }
+        int sizeoffile = states5.size();
         ArrayList<Tuple3<Integer, Integer, String>> collection1 = addFunStr(states5);
         /*Calling the function SetQuery, which accept ArrayList and executionEnvironment*/
-        setQuery(collection1,streamExecutionEnvironment);
-        streamExecutionEnvironment.execute("Write");
+        long startTime = System.currentTimeMillis();
+
+//        setQuery(collection1,streamExecutionEnvironment);
+//        streamExecutionEnvironment.execute("Write");
         /*Uncomment for retrieving from the table*/
-        //getQuery(env);
+        getQuery(env);
+        long endTime = System.currentTimeMillis();
+        long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
+        System.out.println("Execution time for the Set method is: " + duration +" milliseconds and size of file is " +sizeoffile*numcol*2 + " Byte" );
     }
     public static DataStream<Tuple3<Integer, Integer, String>> setQuery(ArrayList<Tuple3<Integer, Integer, String>> collection, StreamExecutionEnvironment env) throws Exception {
         DataStream<Tuple3<Integer, Integer, String>> stream = env.fromCollection(collection);

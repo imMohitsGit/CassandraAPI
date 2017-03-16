@@ -128,7 +128,7 @@ public class KMeansCassandra {
         } else {
             System.out.println("Printing result to stdout. Use --output to specify output path.");
             ArrayList<Tuple4<Integer,Integer,Double,Double>> collection = SaveCassandraMLK.addFunStr(Format2);
-            printListT(collection);
+            //printListT(collection);
             SaveCassandraMLK.setQuery(SaveCassandraMLK.addFunStr(Format2),strenv);
             strenv.execute("mlk.KMeans Example");
         }
