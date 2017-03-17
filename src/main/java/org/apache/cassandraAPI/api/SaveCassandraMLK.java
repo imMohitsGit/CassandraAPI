@@ -8,6 +8,7 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.batch.connectors.cassandra.CassandraInputFormat;
+import org.apache.flink.batch.connectors.cassandra.CassandraOutputFormat;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.cassandra.CassandraSink;
@@ -31,12 +32,12 @@ public class SaveCassandraMLK {
     private  static  final String GET_STATE = "";
 
     /*
-     *	table script: "CREATE TABLE matrix4 (
-        row_id int,
-        column_id int,
-	    unique_id double,
-        value double,
-        PRIMARY KEY ((row_id , column_id),unique_id));"
+     *	table script: "CREATE TABLE test.matrix4 (
+    row_id int,
+    column_id int,
+	unique_id double,
+    value double,
+    PRIMARY KEY ((unique_id),row_id, column_id));"
      */
     public static void main(String[] args) throws Exception {
 
@@ -77,7 +78,7 @@ public class SaveCassandraMLK {
                 .setClusterBuilder(new ClusterBuilder() {
                     @Override
                     public Cluster buildCluster(Cluster.Builder builder) {
-                        return builder.addContactPoint("127.0.0.1").build(); //Change ibm-power-1 on cluster otherwise 127.0.0.1
+                        return builder.addContactPoint("ibm-power-1").build(); //Change ibm-power-1 on cluster otherwise 127.0.0.1
                     }
                 })
                 .build();
@@ -112,8 +113,8 @@ public class SaveCassandraMLK {
         long column_length = states5.get(0).size();
         ArrayList<Tuple4<Integer, Integer,Double, Double>> collection = new ArrayList<Tuple4<Integer, Integer, Double, Double>>();
         for (int row_id = 1; row_id <= length; row_id++) {
-            for (int col_id = 1; col_id < column_length; col_id++) {
-                collection.add(new Tuple4<Integer, Integer, Double, Double>(row_id, col_id, states5.get(row_id - 1).get(0), states5.get(row_id - 1).get(col_id)));
+            for (int col_id = 0; col_id < column_length; col_id++) {
+                collection.add(new Tuple4<Integer, Integer, Double, Double>(row_id , col_id+1, states5.get(row_id - 1).get(0), states5.get(row_id - 1).get(col_id)));
             }
         }
         return collection;
@@ -153,5 +154,17 @@ public class SaveCassandraMLK {
                 }), TupleTypeInfo.of(new TypeHint<Tuple4<Integer, Integer, Double, Double>>() {
                 }));
         return inputDS;
+    }
+
+
+    public static DataSet<Tuple4<Integer, Integer, Double,Double>> setQueryDataSet(ArrayList<Tuple4<Integer, Integer, Double,Double>> collection, ExecutionEnvironment env) throws Exception {
+        DataSet<Tuple4<Integer, Integer, Double, Double>> dataSet = env.fromCollection(collection);
+        dataSet.output(new CassandraOutputFormat<Tuple4<Integer, Integer, Double, Double>>(INSERT_QUERY, new ClusterBuilder() {
+            @Override
+            protected Cluster buildCluster(Cluster.Builder builder) {
+                return builder.addContactPoints("127.0.0.1").build();
+            }
+        }));
+        return  dataSet;
     }
 }
